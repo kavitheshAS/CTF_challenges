@@ -49,7 +49,7 @@ def decrypt_rsa(N, c, p_chunks, q_chunks):
     return plaintext.hex()
 
 # Read the file and process
-file_name = "output.py"
+file_name = "../includes/output.py"
 decrypted_results = []
 
 with open(file_name, "r") as file:
@@ -86,5 +86,10 @@ for i in range(len(decrypted_results)):
 print(f"v0={v0}")
 print(f"v1_5={v1_5}")
 
-v0=['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19', '0x243f6a88', '0x85a308d3', '0x13198a2e', '0x03707344', '0xa4093942', '0x299f30b0', '0x082efa98', '0xec4e6c89']
-v1_5=['0xbf62a2ea', '0xaa70e06d', '0x3e9d3cc3', '0x43b21c89', '0xec70ced6', '0xe9dc156e', '0xb99bae6a', '0xf6899c17', '0x2fec24f1', '0x5e513866', '0x63f3aa5e', '0xee91c249', '0x2f201c62', '0x2441fc91', '0x6c40e18e', '0x888657f2']
+
+v0 = [int(x, 16) for x in v0]
+v1_5 = [int(x, 16) for x in v1_5]
+
+# Print in C array format
+print(f"uint32_t v0[16] = {{{', '.join(f'0x{x:08x}' for x in v0)}}};")
+print(f"uint32_t v1_5[16] = {{{', '.join(f'0x{x:08x}' for x in v1_5)}}};")

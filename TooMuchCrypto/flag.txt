@@ -1,1 +1,1 @@
-FLAG=P_CTF{Mr_A|_|m4550n_t0l4_t4is_w041d_w0rk_h3h3}
+flag= "p_ctf{Mr_AumA550n_t0l4_t4is_w041d_w0rk_heh3}"

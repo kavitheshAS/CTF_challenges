@@ -15,7 +15,6 @@
     - **menu and main function:** This simulates the interface with the server.
     - **obtaining flag:** We can notice that the signature is not generated if the input message is "give_me_signature".
 
-
     So after removing all the redundant functions and renaming the variables , we get :
 
     ```python
@@ -106,23 +105,20 @@
 
     ```
 
-
-- The challenge seems to be inspired from the [ps3 exploit](https://deeprnd.medium.com/decoding-the-playstation-3-hack-unraveling-the-ecdsa-random-generator-flaw-e9074a51b831) , but here instead of a single value to sign messages , it seems to  use a list of random numbers to do the same , so we should by theory get the same random number signing messages for every 200 messages, here the first message and the 201st message is signed by the same random number(k).
+- The challenge seems to be inspired from the [**PS3** exploit](https://deeprnd.medium.com/decoding-the-playstation-3-hack-unraveling-the-ecdsa-random-generator-flaw-e9074a51b831) , but here instead of a single value to sign messages , it seems to  use a list of random numbers to do the same , so we should by theory get the same random number signing messages for every 200 messages, here the first message and the 201st message is signed by the same random number(k).
 
 - Once we obtain the values of (r,s1) and (r,s2) we can do this:
 
-![alt text](writeup2.jpg)
+![alt text](assets/image.png)
 
 - So we can write a script that will interact with the remote server and store all the responses(ie signatures) from the server and then calculates the private key and then the signature of the text that gives us the flag.
 
-
 ```python
-from pwn import remote
-import re
+from pwn import remote 
 import hashlib
 from hashlib import sha1
 
-j = 201  # Number of interactions
+j=200 #value of j shud be (1+val in range)? number of interactions
 
 def inverse_mod(a, m):
     if m <= 0:
@@ -145,63 +141,50 @@ def inverse_mod(a, m):
     
     return x % m
 
-# Connect to the server using pwn's `remote`
-host = 'localhost'  # Replace with the actual server's address
-port = 12345        # Replace with the actual port number
-conn = remote(host, port)
+host='seccmaxx.ctf.prgy.in' #Replace with the actual server's addres
+port=1337 #Replace with the actual port number
+conn=remote(host,port,ssl=True)
 
-replies = list(range(j))
-inputs = list(range(j))
+conn.recvuntil(b">")
+conn.sendline(b"1")
+conn.recvuntil(b">")
+conn.sendline(b"0")
+x = eval(conn.recvline().decode().strip())
+r = int(x[0], 16)
+s1 = int(x[1], 16)
 
-# Initial communication with the server
-conn.recvline()  # Read first line from the server
-conn.sendline("1")  # Send '1' to start interaction
+print("loop")
+for i in range(1,j):
+    conn.recvuntil(b">")
+    conn.sendline(b"1")
+    conn.recvuntil(b">")
+    conn.sendline(f"{i}".encode())
+    conn.recvline()
 
-# Begin the interactive loop
-for i in range(j):
-    conn.recvline()  # Wait for prompt
-    conn.sendline("1")  # Send '1' to continue interaction
-    conn.sendline(str(inputs[i]))  # Send current input value
-    replies[i] = conn.recvline()  # Receive reply from server
+conn.recvuntil(b">")
+conn.sendline(b"1")
+conn.recvuntil(b">")
+conn.sendline(b"200")
+x = eval(conn.recvline().decode().strip())
+s2 = int(x[1], 16)
 
-hex_pattern = r"0x[0-9a-fA-F]+"
-print(len(replies))
-print(replies[0], replies[j-1])
-print(inputs[0], inputs[j-1])
-
-# Extract specific patterns from the replies
-tuple_pattern = r"\('([0x0-9a-fA-F]+)', '([0x0-9a-fA-F]+)'\)"
-match1 = re.search(tuple_pattern, replies[0].decode())
-match2 = re.search(tuple_pattern, replies[200].decode())
-if match1 and match2:
-    rh = match1.group(1)
-    s1h = match1.group(2)
-    s2h = match2.group(2)
-
-    print(f"rh = {rh}")
-    print(f"s1h = {s1h}")
-    print(f"s2h = {s2h}")
-
-r = int(rh, 16)
-s1 = int(s1h, 16)
-s2 = int(s2h, 16)
-
-a, b = 0, 7
+a, b  = 0, 7 
 G = (55066263022277343669578718895168534326250603453777594175500187360389116729240,
      32670510020758816978083085130507043184471273380659243275938904335757337482424)
 p = pow(2, 256) - pow(2, 32) - pow(2, 9) - pow(2, 8) - pow(2, 7) - pow(2, 6) - pow(2, 4) - pow(2, 0)
 n = 115792089237316195423570985008687907852837564279074904382605163141518161494337
 
-m1 = str(inputs[0])
-m2 = str(inputs[j-1])
+m1=str(0)
+m2=str(200)
 
 z1 = int(sha1(m1.encode()).hexdigest(), 16)
 z2 = int(sha1(m2.encode()).hexdigest(), 16)
 
-k_0 = int((((z1 - z2) % n) * inverse_mod(s1 - s2, n)) % n)
-d = int(((((s1 * k_0) % n) - z1) * inverse_mod(r, n)) % n)
-print(f"k_0: {k_0}")
-print(f"d: {d}")
+k_0=int((((z1-z2) % n)*inverse_mod(s1-s2,n))%n)
+d=int(((((s1*k_0)%n)-z1)*inverse_mod(r,n))%n)
+print(f"k_0:{k_0}")
+print(f"d:{d}")
+
 
 def add_points(P, Q, p):
     x1, y1 = P
@@ -230,41 +213,37 @@ def apply_double_and_add_method(G, k, p):
             target_point = add_points(target_point, G, p)
     is_on_curve(target_point, p)
     return target_point
-
 Q = apply_double_and_add_method(G=G, k=d, p=p)
 
-random_point = apply_double_and_add_method(G=G, k=k_0, p=p)
+random_point=apply_double_and_add_method(G=G, k=k_0, p=p)
 
-r_e = (random_point[0]) % n
-rh = hex(r_e)
-message = "give_me_signature"
+r_e=(random_point[0])%n 
+rh=hex(r_e)
+message="give_me_signature"
 
-hash_int = int(hashlib.sha1(message.encode()).hexdigest(), 16)
-s_e = int(((hash_int + r * d) * pow(k_0, -1, n)) % n)
-sh = hex(s_e)
+hash_int = int(hashlib.sha1(message.encode()).hexdigest(),16)
+s_e= int(((hash_int + r * d) * pow(k_0,-1, n)) % n)
+sh=hex(s_e)
 
-print(r_e, s_e)
+print(r_e,s_e)
 
-# Final interaction with the server
-conn.sendline("2")
-conn.recvline()  # Wait for server prompt
-conn.sendline(f"{r_e}")
-conn.sendline(f"{s_e}")
-print(conn.recvline().decode())  # Print the server's response
-conn.sendline("1")
-print(conn.recvline().decode())
-
-conn.close()
+conn.recvuntil(b">")
+conn.sendline(b"2")
+conn.recvuntil(b"r:")
+conn.sendline(f"{r_e}".encode())
+conn.recvuntil(b"s:")
+conn.sendline(f"{s_e}".encode())
+print(conn.recvline().decode().strip())
 ```
 
 - This will output the flag when run , like
-![alt text](writeup.png)
 
 ```bash
-1. Sign messages
-> !!!SENSITIVE INFORMATION ALERT!!!
-we have to make sure its you boss:
-Enter the signature 
-Enter int value of r: Enter int value of s: p_ctf{priv4t3_key_r3v34l3d}
-Welcome boss, what do you want me to do!
+[+] Opening connection to seccmaxx.ctf.prgy.in on port 1337: Done
+loop
+k_0:717763941780183118526530982790522858243178943429260722922420559033064098666
+d:12984085677200567120025541160626933671102186318375640817200001093806261430104
+49442086066263765872612330358881459288101239965427804702051767507896016250058 51260143935973258174511406091082379391286362599591220652635480018025470806600
+p_ctf{I5it_tH3K3Y_0r_y0|_|r_pr!5ef0R_fr3340m}
+[*] Closed connection to seccmaxx.ctf.prgy.in port 1337
 ```

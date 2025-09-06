@@ -1,6 +1,7 @@
 # SizeDoesMatter
 
-- We are given a binary , a packet capture and 
+- We are given a binary, a packet capture and .zsh_history file.
+- The .zsh_history file gives us additional context on how the pcap file was generated and its relation with the binary given, which helps in further analysis.
 
 ```c
 pBVar2 = BN_new();
@@ -13,23 +14,29 @@ if (iVar1 < 0) {
 BN_rshift(pBVar2,r,iVar1 >> 2);  // N^0.25 (fourth root of N)
 BN_div(pBVar2,(BIGNUM *)0x0,pBVar2,a,ctx);  // d = (N^0.25) / 3
 ```
-- This is a hint that d is small:
-- ``BN_rshift(pBVar2, r, iVar1 >> 2);`` computes N^0.25, meaning d is way too small.
-- ``BN_div(pBVar2, (BIGNUM *)0x0, pBVar2, a, ctx);`` divides by 3, making d even smaller.
-- We can see that the value of the d generated is small, specifically has the constraint ``<(N^0.25)/3`` , its vulnerable to [wieners attack](https://cryptohack.gitbook.io/cryptobook/untitled/low-private-component-attacks/wieners-attack) on rsa
+**Observations**
 
-- To Get the values from pcap file , open the given pcap file with wireshark for analysis:
+- The code snippet hints that d is small:
+
+- ``BN_rshift(pBVar2,r,iVar1>>2);`` computes N^0.25, indicating d is significantly small.
+
+- ``BN_div(pBVar2,(BIGNUM*)0x0,pBVar2,a,ctx);`` divides by 3, making d even smaller.
+- This is a hint that d is small:
+
+- We can see that the value of the d generated is small, specifically has the constraint ``<(N^0.25)/3``, its vulnerable to [Wiener's attack](https://cryptohack.gitbook.io/cryptobook/untitled/low-private-component-attacks/wieners-attack) on rsa
+
+- To Get the values from pcap file, open the given pcap file with wireshark for analysis:
 
     - we get N  
-    ![alt text](image.png) 
+    ![alt text](assets/image.png) 
 
     - we get e 
-     ![alt text](image-1.png) 
+     ![alt text](assets/image-1.png) 
     - we get c 
-    ![alt text](image-2.png) 
+    ![alt text](assets/image-2.png) 
 
 
-find the server addresses from the pcap file and get the values from them keep in below script:
+find the server addresses from the pcap file and get the values of N,e and c and substitute them in below script:
 
 ```python
 #!/usr/bin/env python3
@@ -50,7 +57,7 @@ if d:
 else:
     print("Wiener's Attack failed.")
 ```
-Running the above script , we get the 
+Running the above script, we get the 
 
 ```bash
 $ python3 solve.py

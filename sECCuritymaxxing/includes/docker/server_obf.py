@@ -4,12 +4,11 @@ import hashlib
 import sys
 import os
 import base64
-# import numpy as np
+import numpy as np
 from Crypto.Random import random
 from dotenv import load_dotenv
 
-#x00 - xoxo
-#m00 - momo
+
 
 a, b ,c = 0, 7 , 10
 load_dotenv()
@@ -33,13 +32,13 @@ def f1(P, Q, p):
 def f6():
     res = list(map(lambda _: int(str(random.getrandbits(256)),10),range(50)))
     return res
-# def f9(key1):
-#     block0 = hashlib.md5(key1.encode()).hexdigest()
-#     block1 = hashlib.sha256(key1.encode()).hexdigest()
-#     for key in key_array:
-#         key=random.getrandbits(256) 
-#     expanded_key = base64.b64encode(key1.encode()).decode()
-#     return key_array,block1,block0
+def f9(key1):
+    block0 = hashlib.md5(key1.encode()).hexdigest()
+    block1 = hashlib.sha256(key1.encode()).hexdigest()
+    for key in key_array:
+        key=random.getrandbits(256) 
+    expanded_key = base64.b64encode(key1.encode()).decode()
+    return key_array,block1,block0
 def f2(P, p):
     x, y = P
     assert (y * y) % p == (pow(x, 3, p) + a * x + b) % p
@@ -112,7 +111,7 @@ def menu():
                 print("Invalid choice!please enter the number (! or 2).")
         except ValueError:
             print("Invalid choice!please enter the number (! or 2).")
-    # return int(input("> "))
+
 def main():
     global rppi
     while True:

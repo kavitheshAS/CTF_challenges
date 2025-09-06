@@ -3,9 +3,9 @@ TO_READ=64
 
 class state256:
     def __init__(self):
-        self.h=[0]*8 # Initial hash values (chain variables)
-        self.s=[0]*4 #salt
-        self.t=[0]*2 #counter to track number of bits processed
+        self.h=[0]*8 
+        self.s=[0]*4 
+        self.t=[0]*2 
 
         self.buflen=0
         self.nullt=0
@@ -13,12 +13,10 @@ class state256:
         self.buf = np.zeros(TO_READ, dtype=np.uint32)
 
 def u8to32_big(p):
-    """ Converts 4 bytes (big-endian) to a 32-bit integer. """
-    # return ((p[0]<<24) | (p[1]<<16) | (p[2]<<8) | p[3])
     return np.uint32((p[0]<<24) | (p[1]<<16) | (p[2]<<8) | p[3])
 
 def u32to8_big(value):
-    value = value & 0xFFFFFFFF  # Ensure it's a 32-bit value
+    value = value & 0xFFFFFFFF  
     arr = bytearray(4)
     arr[0] = (value >> 24) & 0xFF
     arr[1] = (value >> 16) & 0xFF
@@ -27,11 +25,9 @@ def u32to8_big(value):
     return arr
 
 def rot(x,n):
-    """left circular shift of 32 bit integer x by n bits"""
     return ((x<<(32-n)) | (x>>n)) & 0xFFFFFFFF
 
 def rotl(x, n):
-    """ Right circular shift of 32-bit integer x by n bits. """
     return ((x >> (32 - n)) | (x << n)) & 0xFFFFFFFF
 
 sigma = np.array([
